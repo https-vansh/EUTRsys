@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EUDR System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍃</text></svg>">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f0f4f8; }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .btn { font-weight: 600; border-radius: 0.5rem; padding: 0.75rem 1.5rem; transition: all 0.3s ease-in-out; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .btn-primary { background-color: #16a34a; color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: #15803d; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(22, 163, 74, 0.3); }
+        .input-field, .select-field { border-radius: 0.5rem; border: 1px solid #d1d5db; padding: 0.6rem 0.8rem; transition: border-color 0.2s, box-shadow 0.2s; background-color: #f9fafb; }
+        .input-field:focus, .select-field:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); background-color: white; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
+        
+        /* A4 Page Styles */
+        .a4-page {
+            background: white; width: 297mm; height: 210mm; margin: 1rem auto;
+            padding: 1cm; box-shadow: 0 0 10px rgba(0,0,0,0.1); border: 1px solid #ccc;
+            font-family: Arial, sans-serif; font-size: 8pt; color: #000;
+            display: flex; flex-direction: column;
+        }
+
+        /* Challan Specific Styles */
+        .challan-page {
+            height: 297mm; width: 210mm; 
+        }
+        .challan-header { text-align: center; }
+        .challan-header h1 { font-size: 14pt; font-weight: bold; margin: 0; }
+        .challan-header h2 { font-size: 11pt; margin: 2px 0; }
+        .challan-meta-info { display: flex; justify-content: space-between; font-weight: bold; margin: 10px 0; }
+        .challan-log-grid { display: flex; justify-content: space-between; margin: 10px 0; flex-grow: 1; gap: 10px; }
+        .challan-log-table { width: 33%; border-collapse: collapse; border: 1px solid #000; }
+        .challan-log-table th, .challan-log-table td { border: 1px solid #000; text-align: center; padding: 1px; vertical-align: middle;}
+        .challan-log-table th { font-weight: bold; }
+        
+        .challan-footer { 
+            border-top: 2px solid #000; padding-top: 10px; margin-top: auto; 
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+        .challan-footer-right { text-align: right; }
+        .challan-details-table { border-collapse: collapse; border: 1px solid #000; display: inline-block; }
+        .challan-details-table td { border: 1px solid #000; padding: 2px 5px; text-align: left; white-space: nowrap; }
+        .challan-details-table td:first-child { font-weight: bold; }
+        .challan-signature { text-align: right; }
+        .challan-signature p { margin: 0; }
+
+     /* Register Specific Styles */
+        .register-header { text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 1rem; }
+        .register-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 6pt;
+            table-layout: fixed; /* Crucial for respecting custom widths */
+        }
+        .register-table th, .register-table td {
+            border: 1px solid #000;
+            padding: 2px;
+            text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word; /* Allows long words in headers to break */
+        }
+        .register-table th { font-weight: bold; }
+        .register-table td { line-height: 1.2; }
+        .register-footer { margin-top: auto; padding-top: 1rem; display: flex; justify-content: flex-end; }
+        .register-table input { width: 95%; border: none; background: #f0f4f8; text-align: center; font-size: 7pt; padding: 1px; }
+
+        /* --- Inward Register Column Width Control --- */
+        #inwardRegisterTable th:nth-child(1), #inwardRegisterTable td:nth-child(1) { width: 3%; }  /* Sr. No */
+        #inwardRegisterTable th:nth-child(2), #inwardRegisterTable td:nth-child(2) { width: 12%; } /* Farmer Name */
+        #inwardRegisterTable th:nth-child(3), #inwardRegisterTable td:nth-child(3) { width: 5%; }  /* Village */
+        #inwardRegisterTable th:nth-child(4), #inwardRegisterTable td:nth-child(4) { width: 7%; }  /* Khasra No */
+        #inwardRegisterTable th:nth-child(5), #inwardRegisterTable td:nth-child(5) { width: 12%; } /* Material */
+        #inwardRegisterTable th:nth-child(6), #inwardRegisterTable td:nth-child(6) { width: 8%; }  /* Vehicle No. */
+        #inwardRegisterTable th:nth-child(7), #inwardRegisterTable td:nth-child(7) { width: 6%; }  /* Weight Slip No. */
+        #inwardRegisterTable th:nth-child(8), #inwardRegisterTable td:nth-child(8) { width: 3%; }  /* Lot No. */
+        #inwardRegisterTable th:nth-child(9), #inwardRegisterTable td:nth-child(9) { width: 4%; }  /* Log Qty */
+        #inwardRegisterTable th:nth-child(10),#inwardRegisterTable td:nth-child(10){ width: 5%; }  /* Weight */
+        #inwardRegisterTable th:nth-child(11),#inwardRegisterTable td:nth-child(11){ width: 5%; }  /* Volume */
+        #inwardRegisterTable th:nth-child(12),#inwardRegisterTable td:nth-child(12){ width: 6%; }  /* Purchase Inv No */
+        #inwardRegisterTable th:nth-child(13),#inwardRegisterTable td:nth-child(13){ width: 7%; }  /* Purchase Inv Date */
+        #inwardRegisterTable th:nth-child(14),#inwardRegisterTable td:nth-child(14){ width: 6%; }  /* Colour */
+        #inwardRegisterTable th:nth-child(15),#inwardRegisterTable td:nth-child(15){ width: 7%; }  /* Mediator */
+        #inwardRegisterTable th:nth-child(16),#inwardRegisterTable td:nth-child(16){ width: 4%; }  /* Remarks */
+
+        @media print {
+            body { background-color: #fff !important; }
+            .no-print { display: none !important; }
+            body > *:not(.print-this) { display: none !important; }
+            .print-this { display: block !important; }
+            .a4-page { margin: 0; box-shadow: none; border: none; page-break-after: always; }
+            .register-table input { background: transparent; }
+        }
+    </style>
+</head>
+<body class="p-4 sm-p-6 md:p-8">
+
+    <!-- Main Allocation Page -->
+    <div id="allocationPage" class="w-full max-w-screen-xl mx-auto">
+        <div class="card p-6 md:p-8">
+            <div class="text-center mb-8">
+                <div class="inline-block bg-green-100 text-green-700 p-3 rounded-full mb-4">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-tree-fill" viewBox="0 0 16 16">
+                        <path d="M8.416.223a.5.5 0 0 0-.832 0l-3 4.5A.5.5 0 0 0 5 5.5h.098L3.076 8.735A.5.5 0 0 0 3.5 9.5h.191l-1.638 3.276a.5.5 0 0 0 .447.724H7V16h2v-2.5h4.5a.5.5 0 0 0 .447-.724L12.31 9.5h.191a.5.5 0 0 0 .424-.765L10.902 5.5H11a.5.5 0 0 0 .416-.777l-3-4.5z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900">EUDR Timber</h1>
+                <p class="text-gray-600 mt-2">Efficiently allocate timber and generate challans with ease.</p>
+            </div>
+            
+            <div class="space-y-6">
+                 <fieldset class="border p-4 rounded-lg">
+                    <legend class="font-semibold text-lg px-2 text-gray-700">Shipment Details</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div><label for="partyName" class="block text-sm font-medium text-gray-700 mb-1">Party Name</label><input type="text" id="partyName" class="input-field w-full" value="THAR ART INC"></div>
+                        <div>
+                            <label for="sawmill" class="block text-sm font-medium text-gray-700 mb-1">Sawmill (Job Worker)</label>
+                            <select id="sawmill" class="select-field w-full">
+                                <option value="Sharda Vijay Sawmill">Sharda Vijay Sawmill</option>
+                                <option value="Sunrise Industries">Sunrise Industries</option>
+                                <option value="Sahara Industries">Sahara Industries</option>
+                                <option value="Sharda Timber Mart">Sharda Timber Mart</option>
+                                <option value="Samarpan">Samarpan</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+                 <fieldset class="border p-4 rounded-lg">
+                    <legend class="font-semibold text-lg px-2 text-gray-700">Timber Properties</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+                        <div>
+                            <label for="timberSpecies" class="block text-sm font-medium text-gray-700 mb-1">Timber Species</label>
+                            <select id="timberSpecies" class="select-field w-full">
+                                <option>MANGO THAD & DALA</option>
+                                <option>Acacia Nilotica</option>
+                                <option>Eucalyptus</option>
+                                <option>Teak Wood</option>
+                            </select>
+                        </div>
+                        <div><label for="finishedGoodsVolume" class="block text-sm font-medium text-gray-700 mb-1">Finished Goods (CFT)</label><input type="number" id="finishedGoodsVolume" class="input-field w-full" value="1000"></div>
+                        <div><label for="avgDensity" class="block text-sm font-medium text-gray-700 mb-1">Avg. Density (kg/cft)</label><input type="number" id="avgDensity" class="input-field w-full" value="48.03"></div>
+                        <div><label for="avgRecovery" class="block text-sm font-medium text-gray-700 mb-1">Avg. Recovery (%)</label><input type="number" id="avgRecovery" class="input-field w-full" value="77"></div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="mt-8">
+                 <label for="numLorries" class="block text-sm font-medium text-center text-gray-700 mb-1">Number of Lorries to Allocate</label>
+                 <input type="number" id="numLorries" class="input-field w-full max-w-xs mx-auto block" value="8">
+            </div>
+
+            <div class="text-center mt-8 mb-6">
+                <button id="allocateBtn" class="btn btn-primary">Allocate Lorries</button>
+            </div>
+            
+            <div id="messageArea" class="text-center mb-6 text-red-600 font-medium"></div>
+            
+            <div id="results" class="overflow-x-auto">
+                <table id="allocationTable" class="min-w-full divide-y divide-gray-200"></table>
+                 <div id="generateChallansContainer" class="text-center mt-6 hidden">
+                    <button id="openChallanModalBtn" class="btn btn-primary">Generate Challans</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Challan Display Page -->
+    <div id="challanPage" class="hidden">
+        <div class="no-print text-center my-4 space-x-4">
+            <button class="btn btn-primary back-btn">← Back to Allocation</button>
+            <button id="openOutwardModalBtn" class="btn btn-primary bg-purple-600 hover:bg-purple-800">Generate Inward/Outward Register</button>
+            <button id="printChallansBtn" class="btn bg-yellow-600 text-white hover:bg-yellow-800">Print All Challans</button>
+        </div>
+        <div id="challanOutputContainer"></div>
+    </div>
+    
+    <!-- Register Display Page -->
+    <div id="registerPage" class="hidden">
+         <div class="no-print text-center my-4 space-x-4">
+            <button class="btn btn-primary back-btn">← Back to Allocation</button>
+            <button id="printRegisterBtn" class="btn bg-yellow-600 text-white hover:bg-yellow-800">Print Register</button>
+        </div>
+        <div id="registerOutputContainer"></div>
+    </div>
+
+    <!-- Challan Details Modal -->
+    <div id="challanDetailsModal" class="modal-overlay hidden">
+        <div class="card p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-6 text-center">Challan Details</h2>
+            <form id="challanForm" class="space-y-6">
+                <fieldset class="border p-4 rounded-lg">
+                    <legend class="font-semibold text-lg px-2 text-gray-700">Log Dimension Constraints</legend>
+                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                        <div><label class="block text-sm">Min Length (ft)</label><input type="number" step="0.25" id="minLength" class="input-field w-full" value="3"></div>
+                        <div><label class="block text-sm">Max Length (ft)</label><input type="number" step="0.25" id="maxLength" class="input-field w-full" value="11.25"></div>
+                        <div><label class="block text-sm">Min Round (in)</label><input type="number" id="minRound" class="input-field w-full" value="23"></div>
+                        <div><label class="block text-sm">Max Round (in)</label><input type="number" id="maxRound" class="input-field w-full" value="68"></div>
+                    </div>
+                </fieldset>
+                <fieldset class="border p-4 rounded-lg">
+                    <legend class="font-semibold text-lg px-2 text-gray-700">Inward Details</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div><label for="purchaseStartDate" class="block text-sm">Purchase Start Date</label><input type="date" id="purchaseStartDate" class="input-field w-full"></div>
+                        <div><label for="purchaseEndDate" class="block text-sm">Purchase End Date</label><input type="date" id="purchaseEndDate" class="input-field w-full"></div>
+                        <div><label for="farmerName" class="block text-sm">Farmer Name</label><input type="text" id="farmerName" class="input-field w-full" value="MALEK SARFUMIYA JIVAMIYA"></div>
+                        <div><label for="village" class="block text-sm">Village</label><input type="text" id="village" class="input-field w-full" value="VALLA"></div>
+                        <div><label for="khasraNo" class="block text-sm">Khasra No.</label><input type="text" id="khasraNo" class="input-field w-full" value="110-A-Paiki"></div>
+                        <div><label for="mediatorName" class="block text-sm">Mediator Name</label><input type="text" id="mediatorName" class="input-field w-full" value=""></div>
+                    </div>
+                </fieldset>
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button type="submit" class="btn btn-primary">Generate</button>
+                    <button type="button" id="closeChallanModalBtn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW: Outward Details Modal -->
+    <div id="outwardDetailsModal" class="modal-overlay hidden">
+        <div class="card p-8 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-6 text-center">Outward Register Details</h2>
+            <form id="outwardRegisterForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+                    <div><label class="block text-sm">SR No.</label><input type="text" id="outwardSrNo" class="input-field w-full" value="3"></div>
+                    <div><label class="block text-sm">Bill No.</label><input type="text" id="outwardBillNo" class="input-field w-full" value="5/13/2024-25"></div>
+                    <div><label class="block text-sm">Bill Date</label><input type="date" id="outwardBillDate" class="input-field w-full"></div>
+                    <div><label class="block text-sm">Description</label><input type="text" id="outwardDescription" class="input-field w-full" value="MANGO WOODEN SIZE"></div>
+                    <div><label class="block text-sm">Weight Slip No.</label><input type="text" id="outwardWeightSlip" class="input-field w-full" value="M 1781"></div>
+                    <div><label class="block text-sm">Truck No.</label><input type="text" id="outwardTruckNo" class="input-field w-full" value="RJ-19-GF-9626"></div>
+                    <div><label class="block text-sm">LR No.</label><input type="text" id="outwardLrNo" class="input-field w-full" value="297"></div>
+                    <div><label class="block text-sm">Driver Name</label><input type="text" id="outwardDriverName" class="input-field w-full" value="MAHENDRA SINGH"></div>
+                    <div><label class="block text-sm">Driver Contact</label><input type="text" id="outwardDriverContact" class="input-field w-full" value="9016374034"></div>
+                    <div><label class="block text-sm">License No.</label><input type="text" id="outwardLicense" class="input-field w-full" value="RJ1920220016166"></div>
+                    <div><label class="block text-sm">RTO</label><input type="text" id="outwardRto" class="input-field w-full" value="JODHPUR (RJ)"></div>
+                    <div class="lg:col-span-3"><label class="block text-sm">Transport Name & Address</label><input type="text" id="outwardTransport" class="input-field w-full" value="SHREE MAHADEV TRANSPORT CO. AT.NADIAD"></div>
+                </div>
+                <div class="mt-8 flex justify-center space-x-4">
+                    <button type="submit" class="btn btn-primary">Generate Register</button>
+                    <button type="button" id="closeOutwardModalBtn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let allocationData = [];
+        const cftToCbmFactor = 0.0283168;
+        const expandedVehicleNumbers = [
+            'GJ-01-AB-1234', 'GJ-02-CD-5678', 'GJ-03-EF-9012', 'GJ-04-GH-3456', 'GJ-05-IJ-7890',
+            'GJ-06-KL-1122', 'GJ-07-MN-3344', 'GJ-08-OP-5566', 'GJ-09-QR-7788', 'GJ-10-ST-9900',
+            'MH-01-UV-2468', 'MH-02-WX-1357', 'MH-03-YZ-8642', 'MH-04-BC-9753', 'MH-05-DE-1029',
+            'RJ-14-FG-3847', 'RJ-19-HI-5624', 'RJ-20-JK-8401', 'RJ-27-LM-1928', 'RJ-31-NO-4756',
+            'MP-09-PQ-6583', 'MP-17-RS-9321', 'MP-20-TU-1102', 'MP-22-VW-4895', 'MP-30-XY-7634'
+        ];
+        const primaryColors = ["Yellow", "Pink", "Green", "Blue", "White", "Black", "Dark Blue", "Orange", "Red"];
+        const secondaryColors = ["Yellow 2", "Pink 2", "Green 2"];
+
+        // Event Listeners
+        document.getElementById('allocateBtn').addEventListener('click', runAllocation);
+        document.getElementById('openChallanModalBtn').addEventListener('click', () => document.getElementById('challanDetailsModal').classList.remove('hidden'));
+        document.getElementById('closeChallanModalBtn').addEventListener('click', () => document.getElementById('challanDetailsModal').classList.add('hidden'));
+        document.getElementById('challanForm').addEventListener('submit', generateChallans);
+        
+        document.getElementById('openOutwardModalBtn').addEventListener('click', () => document.getElementById('outwardDetailsModal').classList.remove('hidden'));
+        document.getElementById('closeOutwardModalBtn').addEventListener('click', () => document.getElementById('outwardDetailsModal').classList.add('hidden'));
+        document.getElementById('outwardRegisterForm').addEventListener('submit', generateRegister);
+        
+        document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => {
+            document.getElementById('allocationPage').classList.remove('hidden');
+            document.getElementById('challanPage').classList.add('hidden');
+            document.getElementById('registerPage').classList.add('hidden');
+        }));
+
+        document.getElementById('printChallansBtn').addEventListener('click', () => printContent('challanPage'));
+        document.getElementById('printRegisterBtn').addEventListener('click', () => printContent('registerPage'));
+
+        // Initial Setup
+        const today = new Date();
+        document.getElementById('purchaseStartDate').valueAsDate = today;
+        const fourDaysLater = new Date();
+        fourDaysLater.setDate(today.getDate() + 4);
+        document.getElementById('purchaseEndDate').valueAsDate = fourDaysLater;
+        
+        function printContent(pageId) {
+            const printElement = document.getElementById(pageId);
+            printElement.classList.add('print-this');
+            window.print();
+            printElement.classList.remove('print-this');
+        }
+
+        function runAllocation() {
+            const messageArea = document.getElementById('messageArea');
+            const allocationTable = document.getElementById('allocationTable');
+            messageArea.textContent = '';
+            allocationData = [];
+
+            const finishedGoodsVolume = parseFloat(document.getElementById('finishedGoodsVolume').value);
+            const avgDensity = parseFloat(document.getElementById('avgDensity').value);
+            const avgRecovery = parseFloat(document.getElementById('avgRecovery').value);
+            const numLorries = parseInt(document.getElementById('numLorries').value);
+
+            if ([finishedGoodsVolume, avgDensity, avgRecovery, numLorries].some(isNaN) || [finishedGoodsVolume, avgDensity, avgRecovery, numLorries].some(v => v <= 0)) {
+                messageArea.textContent = 'Error: All input values must be positive numbers.';
+                return;
+            }
+             if (numLorries > expandedVehicleNumbers.length) {
+                messageArea.textContent = `Error: Cannot allocate more than ${expandedVehicleNumbers.length} lorries (not enough unique vehicle numbers).`;
+                return;
+            }
+            
+            const finishedGoodsWeight = finishedGoodsVolume * avgDensity;
+            let totalRawMaterialWeight = finishedGoodsWeight / (avgRecovery / 100);
+            totalRawMaterialWeight = Math.round(totalRawMaterialWeight / 5) * 5; 
+
+            const minWeightPerLorry = 6500;
+            const maxWeightPerLorry = 8500;
+            
+            let lorryWeights = [];
+            let allocationSuccess = false;
+            const maxAttempts = 5000;
+
+            for (let attempt = 0; attempt < maxAttempts && !allocationSuccess; attempt++) {
+                lorryWeights = [];
+                let remainingWeight = totalRawMaterialWeight;
+                let tempSuccess = true;
+                for (let i = 0; i < numLorries - 1; i++) {
+                    const minPossible = Math.max(minWeightPerLorry, remainingWeight - (maxWeightPerLorry * (numLorries - 1 - i)));
+                    const maxPossible = Math.min(maxWeightPerLorry, remainingWeight - (minWeightPerLorry * (numLorries - 1 - i)));
+                    const minPossible5 = Math.ceil(minPossible / 5) * 5;
+                    const maxPossible5 = Math.floor(maxPossible / 5) * 5;
+                    if (minPossible5 > maxPossible5) { tempSuccess = false; break; }
+                    const rangeInChunks = (maxPossible5 - minPossible5) / 5;
+                    const randomChunk = Math.floor(Math.random() * (rangeInChunks + 1));
+                    const randomWeight = minPossible5 + randomChunk * 5;
+                    lorryWeights.push(randomWeight);
+                    remainingWeight -= randomWeight;
+                }
+                if (!tempSuccess) continue;
+                lorryWeights.push(remainingWeight);
+                if (remainingWeight >= minWeightPerLorry && remainingWeight <= maxWeightPerLorry) {
+                    allocationSuccess = true;
+                }
+            }
+
+            if (!allocationSuccess) {
+                messageArea.textContent = 'Error: Could not find a valid weight distribution. Try adjusting inputs.';
+                return;
+            }
+
+            const deviationPercent = 4;
+            function distributeDeviations(targetAverage, numItems, deviation) {
+                const draftValues = Array.from({ length: numItems }, () => targetAverage * (1 + (Math.random() * 2 - 1) * (deviation / 100)));
+                const draftAverage = draftValues.reduce((a, b) => a + b, 0) / numItems;
+                const correctionFactor = targetAverage / draftAverage;
+                return draftValues.map(val => val * correctionFactor);
+            }
+
+            const lorryDensities = distributeDeviations(avgDensity, numLorries, deviationPercent);
+            const lorryRecoveries = distributeDeviations(avgRecovery, numLorries, deviationPercent);
+            
+            const shuffledPrimary = [...primaryColors].sort(() => 0.5 - Math.random());
+            const shuffledSecondary = [...secondaryColors].sort(() => 0.5 - Math.random());
+            const colorPool = [...shuffledPrimary, ...shuffledSecondary];
+
+            lorryWeights.forEach((weight, i) => {
+                allocationData.push({
+                    lot: i + 1,
+                    weight: weight,
+                    density: lorryDensities[i],
+                    recovery: lorryRecoveries[i],
+                    batchColor: colorPool[i % colorPool.length]
+                });
+            });
+            
+            const tableHead = `
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Lot</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Weight (Kgs)</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Density</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Recovery (%)</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Inward Log (CFT)</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Inward Log (CBM)</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Finished (CFT)</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Finished (CBM)</th>
+                        <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Color</th>
+                    </tr>
+                </thead>`;
+            let tableBody = '<tbody>';
+            allocationData.forEach(lorry => {
+                const inwardCFT = lorry.weight / lorry.density;
+                const inwardCBM = inwardCFT * cftToCbmFactor;
+                const finishedCFT = inwardCFT * (lorry.recovery / 100);
+                const finishedCBM = finishedCFT * cftToCbmFactor;
+                tableBody += `
+                    <tr>
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900">${lorry.lot}</td>
+                        <td class="px-4 py-3 text-sm text-right">${lorry.weight.toFixed(0)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${lorry.density.toFixed(4)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${lorry.recovery.toFixed(3)}%</td>
+                        <td class="px-4 py-3 text-sm text-right">${inwardCFT.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${inwardCBM.toFixed(3)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${finishedCFT.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${finishedCBM.toFixed(3)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${lorry.batchColor}</td>
+                    </tr>`;
+            });
+            tableBody += '</tbody>';
+            allocationTable.innerHTML = tableHead + tableBody;
+            
+            document.getElementById('generateChallansContainer').classList.remove('hidden');
+        }
+
+        function generateChallans(event) {
+            event.preventDefault();
+            const challanDetails = {
+                startDate: new Date(document.getElementById('purchaseStartDate').value),
+                endDate: new Date(document.getElementById('purchaseEndDate').value),
+                farmerName: document.getElementById('farmerName').value,
+                village: document.getElementById('village').value,
+                khasraNo: document.getElementById('khasraNo').value,
+                mediatorName: document.getElementById('mediatorName').value,
+                minLength: parseFloat(document.getElementById('minLength').value),
+                maxLength: parseFloat(document.getElementById('maxLength').value),
+                minRound: parseFloat(document.getElementById('minRound').value),
+                maxRound: parseFloat(document.getElementById('maxRound').value),
+            };
+
+            const shuffledVehicles = [...expandedVehicleNumbers].sort(() => 0.5 - Math.random());
+            const assignedVehicles = shuffledVehicles.slice(0, allocationData.length);
+
+            const challanDates = allocationData.map(() => getRandomDate(challanDetails.startDate, challanDetails.endDate));
+            challanDates.sort((a, b) => a - b);
+            
+            const container = document.getElementById('challanOutputContainer');
+            container.innerHTML = '';
+
+            allocationData.forEach((lorry, i) => {
+                const inwardCFT = lorry.weight / lorry.density;
+                const logs = generateLogs(inwardCFT, challanDetails.minLength, challanDetails.maxLength, challanDetails.minRound, challanDetails.maxRound);
+                lorry.logs = logs;
+                lorry.vehicleNo = assignedVehicles[i];
+                lorry.challanDate = challanDates[i]; 
+                container.innerHTML += generateChallanHTML(lorry, challanDetails);
+            });
+            
+            // Set default bill date in outward form
+            const lastChallanDate = new Date(allocationData[allocationData.length - 1].challanDate);
+            lastChallanDate.setDate(lastChallanDate.getDate() + 2);
+            document.getElementById('outwardBillDate').valueAsDate = lastChallanDate;
+
+            document.getElementById('challanDetailsModal').classList.add('hidden');
+            document.getElementById('allocationPage').classList.add('hidden');
+            document.getElementById('challanPage').classList.remove('hidden');
+        }
+
+        function generateChallanHTML(lorryData, details) {
+            const sawmillName = document.getElementById('sawmill').value;
+            const partyName = document.getElementById('partyName').value;
+            const timberSpecies = document.getElementById('timberSpecies').value;
+            const formattedDate = lorryData.challanDate.toLocaleDateString('en-GB');
+            
+            // EXACT TOTAL CALCULATION: Sum up the integer volumes and then divide to prevent floating point summation errors.
+            const precisionFactor = 1000; // Must match the factor used in generateLogs
+            const totalCFTInt = lorryData.logs.reduce((sum, log) => sum + log.cftInt, 0);
+            const totalCFT = totalCFTInt / precisionFactor;
+            const totalCBM = totalCFT * cftToCbmFactor;
+
+            let logGridHTML = '<div class="challan-log-grid">';
+            const rowsPerColumn = 30; 
+            for (let col = 0; col < 3; col++) {
+                let tableHTML = `<table class="challan-log-table"><thead><tr><th rowspan="2">SR.</th><th>ROUND MEASURE</th><th>LENGTH</th><th rowspan="2">CFT</th><th rowspan="2">CBM</th></tr><tr><th>(INCHS)</th><th>(FEET)</th></tr></thead><tbody>`;
+                for (let row = 0; row < rowsPerColumn; row++) {
+                    const logIndex = (col * rowsPerColumn) + row;
+                    const serialNumber = logIndex + 1;
+                    if (logIndex < lorryData.logs.length) {
+                        const log = lorryData.logs[logIndex];
+                        tableHTML += `<tr><td>${log.sr}</td><td>${log.circumference.toFixed(0)}</td><td>${log.length.toFixed(2)}</td><td>${log.cft.toFixed(2)}</td><td>${log.cbm.toFixed(3)}</td></tr>`;
+                    } else {
+                        tableHTML += `<tr><td>${serialNumber}</td><td></td><td></td><td></td><td></td></tr>`;
+                    }
+                }
+                tableHTML += `</tbody></table>`;
+                logGridHTML += tableHTML;
+            }
+            logGridHTML += '</div>';
+
+            return `
+                <div class="a4-page challan-page">
+                    <div class="challan-header">
+                        <h1>${sawmillName.toUpperCase()}</h1>
+                        <h2>INWORD LOG REGISTER</h2>
+                    </div>
+                    <div class="challan-meta-info">
+                        <span>COMPANY:- ${partyName}</span>
+                        <span>LOT NO. ${lorryData.lot}</span>
+                        <span>DATE ${formattedDate}</span>
+                        <span>VEHICLE NO. ${lorryData.vehicleNo}</span>
+                    </div>
+                    ${logGridHTML}
+                    <div class="challan-footer">
+                        <div class="challan-footer-left">
+                             <table class="challan-details-table">
+                                <tbody>
+                                    <tr><td>LOG QUANTITY</td><td>${lorryData.logs.length}</td></tr>
+                                    <tr><td>GRAND TOTAL CFT</td><td>${totalCFT.toFixed(2)}</td></tr>
+                                    <tr><td>GRAND TOTAL CMT</td><td>${totalCBM.toFixed(3)}</td></tr>
+                                    <tr><td>WEIGHT (KGS)</td><td>${lorryData.weight.toFixed(0)}</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="challan-footer-center">
+                             <table class="challan-details-table">
+                                <tbody>
+                                    <tr><td>FARMER</td><td>${details.farmerName}</td></tr>
+                                    <tr><td>MEDIATOR</td><td>${details.mediatorName || 'N/A'}</td></tr>
+                                    <tr><td>COLOUR</td><td>${lorryData.batchColor}</td></tr>
+                                    <tr><td>MATERIAL</td><td>${timberSpecies}</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="challan-footer-right">
+                            <div class="challan-signature">
+                                <p>FOR ${sawmillName.toUpperCase()}</p>
+                                <p style="margin-top: 40px;">Authorised Signatory</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        
+        /**
+         * FINALIZED LOGIC: Uses integer math to be immune to floating-point errors.
+         * This guarantees that the sum of individual logs equals the grand total exactly.
+         */
+        function generateLogs(totalVolume, minL, maxL, minR, maxR) {
+            const logs = [];
+            // Use a high precision factor to work with integers. This avoids all floating point errors.
+            const precisionFactor = 1000; 
+            let remainingVolumeInt = Math.round(totalVolume * precisionFactor);
+
+            const avgL = (minL + maxL) / 2;
+            const avgR = (minR + maxR) / 2;
+            const lastLogThresholdInt = Math.round(((Math.pow(avgR, 2) * avgL) / 2304) * precisionFactor);
+
+            // Generate logs until the remaining volume is small enough for the final calculated log.
+            // Capped at 89 to fit the 90-slot challan print format.
+            while (remainingVolumeInt > lastLogThresholdInt && logs.length < 89) {
+                const length = Math.round((Math.random() * (maxL - minL) + minL) * 4) / 4;
+                const circumference = Math.random() * (maxR - minR) + minR;
+                
+                const volumeInt = Math.round(((Math.pow(circumference, 2) * length) / 2304) * precisionFactor);
+
+                if (volumeInt > 0 && volumeInt < remainingVolumeInt) {
+                    // Store the raw dimensions and the exact integer volume.
+                    logs.push({ sr: 0, length, circumference, cftInt: volumeInt });
+                    remainingVolumeInt -= volumeInt; // This subtraction is perfectly accurate.
+                }
+            }
+
+            // Generate the final log to precisely match the remaining integer volume.
+            if (remainingVolumeInt > 0) {
+                let finalLog = null;
+                let attempts = 0;
+                while (!finalLog && attempts < 200) {
+                    const length = Math.round((Math.random() * (maxL - minL) + minL) * 4) / 4;
+                    
+                    // Formula to find circumference for the exact remaining volume, using integer math.
+                    // C = sqrt((V_int * 2304) / (L * precisionFactor))
+                    const requiredCircumference = Math.sqrt((remainingVolumeInt * 2304) / (length * precisionFactor));
+
+                    if (requiredCircumference >= minR && requiredCircumference <= maxR) {
+                        finalLog = { sr: 0, length, circumference: requiredCircumference, cftInt: remainingVolumeInt };
+                    }
+                    attempts++;
+                }
+                
+                if (finalLog) {
+                    logs.push(finalLog);
+                } else {
+                    // Fallback if a perfect final log isn't found (e.g., due to tight constraints).
+                    const fallbackLength = avgL;
+                    const fallbackCircumference = Math.sqrt((remainingVolumeInt * 2304) / (fallbackLength * precisionFactor));
+                    logs.push({ sr: 0, length: fallbackLength, circumference: fallbackCircumference, cftInt: remainingVolumeInt });
+                }
+            }
+            
+            // Convert integer volumes back to decimals for display and add final properties.
+            // The cftInt property is kept for accurate summation later.
+            return logs.map((log, index) => {
+                const cft = log.cftInt / precisionFactor;
+                return {
+                    ...log,
+                    sr: index + 1,
+                    cft: cft,
+                    cbm: cft * cftToCbmFactor
+                };
+            });
+        }
+        
+        function getRandomDate(start, end) {
+            return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+        }
+
+        function generateRegister(event) {
+            event.preventDefault();
+            const outwardDetails = {
+                srNo: document.getElementById('outwardSrNo').value,
+                billNo: document.getElementById('outwardBillNo').value,
+                billDate: new Date(document.getElementById('outwardBillDate').value).toLocaleDateString('en-GB'),
+                description: document.getElementById('outwardDescription').value,
+                weightSlip: document.getElementById('outwardWeightSlip').value,
+                truckNo: document.getElementById('outwardTruckNo').value,
+                lrNo: document.getElementById('outwardLrNo').value,
+                driverName: document.getElementById('outwardDriverName').value,
+                driverContact: document.getElementById('outwardDriverContact').value,
+                license: document.getElementById('outwardLicense').value,
+                rto: document.getElementById('outwardRto').value,
+                transport: document.getElementById('outwardTransport').value,
+            };
+
+            const container = document.getElementById('registerOutputContainer');
+            container.innerHTML = generateInwardRegisterHTML() + generateOutwardRegisterHTML(outwardDetails);
+            
+            document.getElementById('outwardDetailsModal').classList.add('hidden');
+            document.getElementById('challanPage').classList.add('hidden');
+            document.getElementById('registerPage').classList.remove('hidden');
+        }
+
+        function generateInwardRegisterHTML() {
+            const sawmillName = document.getElementById('sawmill').value.toUpperCase();
+            const partyName = document.getElementById('partyName').value.toUpperCase();
+            const timberSpecies = document.getElementById('timberSpecies').value.toUpperCase();
+            const farmerName = document.getElementById('farmerName').value;
+            const village = document.getElementById('village').value;
+            const khasraNo = document.getElementById('khasraNo').value;
+            const mediatorName = document.getElementById('mediatorName').value || 'N/A';
+
+            let inwardBody = '';
+            allocationData.forEach((lorry, i) => {
+                const cbm = (lorry.weight / lorry.density) * cftToCbmFactor;
+                inwardBody += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${farmerName}</td>
+                        <td>${village}</td>
+                        <td>${khasraNo}</td>
+                        <td>${timberSpecies}</td>
+                        <td>${lorry.vehicleNo}</td>
+                        <td><input type="text" class="input-field"></td>
+                        <td>${lorry.lot}</td>
+                        <td>${lorry.logs.length}</td>
+                        <td>${lorry.weight.toFixed(0)}</td>
+                        <td>${cbm.toFixed(3)}</td>
+                        <td><input type="text" class="input-field"></td>
+                        <td>${lorry.challanDate.toLocaleDateString('en-GB')}</td>
+                        <td>${lorry.batchColor}</td>
+                        <td>${mediatorName}</td>
+                        <td></td>
+                    </tr>
+                `;
+            });
+
+            return `
+                <div class="a4-page register-page">
+                    <div>
+                        <div class="register-header">INWARD REGISTER FOR ${partyName}</div>
+                        <table class="register-table" id="inwardRegisterTable">
+                            <thead>
+                                <tr>
+                                    <th>Sr. No</th><th>Farmer Name</th><th>Village</th><th>Khasra No.</th><th>Material Description</th><th>Vehicle No.</th>
+                                    <th>Weight Slip No.</th><th>Lot No.</th><th>Log Qty</th><th>Weight (Kgs)</th><th>Volume (CBM)</th>
+                                    <th>Purchase Invoice No.</th><th>Purchase Invoice Date</th><th>Batch Colour</th><th>Mediator Name</th><th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>${inwardBody}</tbody>
+                        </table>
+                         <div class="register-footer" style="padding-top: 1rem;">
+                            <div class="challan-signature">
+                                <p>FOR, ${sawmillName}</p>
+                                <p style="margin-top: 40px;">Authorised Signatory</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateOutwardRegisterHTML(details) {
+            const sawmillName = document.getElementById('sawmill').value.toUpperCase();
+            const partyName = document.getElementById('partyName').value.toUpperCase();
+            
+            const totalLogs = allocationData.reduce((sum, l) => sum + l.logs.length, 0);
+            const totalWeight = allocationData.reduce((sum, l) => sum + l.weight, 0);
+            const totalCBM = allocationData.reduce((sum, l) => (l.weight / l.density) * cftToCbmFactor, 0);
+            const totalCFT = totalCBM / cftToCbmFactor;
+
+            return `
+                     <div style="margin-top: 2rem; page-break-before: always;">
+                        <div class="register-header">OUTWARD REGISTER FOR ${partyName}</div>
+                        <table class="register-table">
+                            <thead>
+                               <tr>
+                                    <th>SR No.</th><th>BILL NO.</th><th>BILL DATE</th><th>Description of Goods<br>Perticular</th>
+                                    <th>C.B.M. & C.F.T.</th><th>Total Pcs.</th><th>Weight &<br>Weight Slip No.</th>
+                                    <th>Truck No.</th><th>LR No. & Date</th><th>Driver Name & contact No.</th>
+                                    <th>Lic No. & RTO</th><th>Transport Name & Address</th><th>Remark</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>${details.srNo}</td>
+                                    <td>${details.billNo}</td>
+                                    <td>${details.billDate}</td>
+                                    <td>${details.description}</td>
+                                    <td>${totalCBM.toFixed(3)} CBM<br>${totalCFT.toFixed(2)} CFT</td>
+                                    <td>${totalLogs} PCS</td>
+                                    <td>${totalWeight.toFixed(0)} Kgs<br>${details.weightSlip}</td>
+                                    <td>${details.truckNo}</td>
+                                    <td>${details.lrNo}<br>Dt.${details.billDate}</td>
+                                    <td>${details.driverName}<br>Mob No.${details.driverContact}</td>
+                                    <td>${details.license}<br>${details.rto}</td>
+                                    <td>${details.transport}</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="register-footer" style="padding-top: 1rem;">
+                            <div class="challan-signature">
+                                <p>FOR, ${sawmillName}</p>
+                                <p style="margin-top: 40px;">Authorised Signatory</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', runAllocation);
+    </script>
+</body>
+</html>
+
